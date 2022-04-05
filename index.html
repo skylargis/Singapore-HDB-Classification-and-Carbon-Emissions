@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Demo1: Show changes over time with Mapbox GL JS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+    <link
+      href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      }
+
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 20px;
+        line-height: 30px;
+      }
+
+      h2 {
+        font-size: 14px;
+        line-height: 20px;
+        margin-bottom: 10px;
+      }
+
+      a {
+        text-decoration: none;
+        color: #2dc4b2;
+      }
+
+      #console {
+        position: absolute;
+        margin: 10px;
+        width: 240px;
+        background-color: white;
+        padding: 10px 20px;
+      }
+
+      .session {
+        margin-bottom: 20px;
+      }
+
+      .row {
+        height: 12px;
+        width: 100%;
+      }
+
+      .colors {
+        background: linear-gradient(
+          to right,
+          #2dc4b2,
+          #3bb3c3,
+          #669ec4,
+          #8b88b6,
+          #a2719b,
+          #aa5e79
+        );
+        margin-bottom: 5px;
+      }
+
+      .label {
+        width: 15%;
+        display: inline-block;
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div id="console">
+      <h1>Singapore HDB Classification and Carbon Emissions</h1>
+      <p>
+        
+      </p>
+      <div class="session">
+        <h2>Carbon emissions</h2>
+        <div class="row colors"></div>
+        <div class="row labels">
+          <div class="label">0</div>
+          <div class="label">1</div>
+          <div class="label">2</div>
+          <div class="label">3</div>
+          <div class="label">4</div>
+          <div class="label">5+</div>
+        </div>
+      </div>
+      <div class="session">
+        <h2>HDB Type: <label id="active-hour"> </label></h2>
+        <input
+          id="slider"
+          class="row"
+          type="range"
+          min="0"
+          max="4"
+          step="1"
+          value="0"
+        />
+		
+		  <div class="row labels">
+          <div class="label">HHLD</div>
+          <div class="label">LHHD</div>
+          <div class="label">LHLD</div>
+          <div class="label">HHHD</div>
+        </div>
+		
+      </div>
+      <div class="session">
+        <h2>Region in Singapore</h2>
+        <div class="row" id="filters">
+          <input
+            id="all"
+            type="radio"
+            name="toggle"
+            value="all"
+            checked="checked"
+          />
+          <label for="all">All</label>
+          <input id="nerid" type="radio" name="toggle" value="nerid" />
+          <label for="nerid">North-East</label>
+          <input id="wrid" type="radio" name="toggle" value="wrid" />
+          <label for="wrid">West</label>
+		  <input id="crid" type="radio" name="toggle" value="crid" />
+          <label for="crid">Central</label>
+		  <input id="erid" type="radio" name="toggle" value="erid" />
+          <label for="erid">East</label>
+		  <input id="nrid" type="radio" name="toggle" value="nrid" />
+          <label for="nrid">North</label>
+        </div>
+      </div>
+    </div>
+    <script>
+      mapboxgl.accessToken = 'pk.eyJ1IjoiaXVpbiIsImEiOiJja3NkN2N1NXQwbnRhMnZwM21vbTV6dmtyIn0.2pjpY_ecJrnYaNdRAIo7hg';
+      const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/light-v10',
+        center: [103.851959, 1.290270],
+        zoom: 11
+      });
+
+      map.on('load', () => {
+        let filterHour = ['==', ['number', ['get', 'Tag']], 1];
+        let filterDay = ['!=', ['string', ['get', 'REGION_C']], 'placeholder'];
+
+        <!-- map.addLayer( -->
+		<!-- { -->
+          <!-- id: 'collisions', -->
+          <!-- type: 'circle', -->
+          <!-- source: { -->
+            <!-- type: 'geojson', -->
+            <!-- data: './collisions1601.geojson' // replace this with the url of your own geojson ** data: './collisions1601.geojson' -->
+          <!-- }, -->
+          <!-- paint: { -->
+            <!-- 'circle-radius': [ -->
+              <!-- 'interpolate', -->
+              <!-- ['linear'], -->
+              <!-- ['number', ['get', 'Casualty']], -->
+              <!-- 0, -->
+              <!-- 10, -->
+              <!-- 25, -->
+              <!-- 50 -->
+            <!-- ], -->
+            <!-- 'circle-color': [ -->
+              <!-- 'interpolate', -->
+              <!-- ['linear'], -->
+              <!-- ['number', ['get', 'Casualty']], -->
+              <!-- 0, -->
+              <!-- '#2DC4B2', -->
+              <!-- 1, -->
+              <!-- '#3BB3C3', -->
+              <!-- 2, -->
+              <!-- '#669EC4', -->
+              <!-- 3, -->
+              <!-- '#8B88B6', -->
+              <!-- 4, -->
+              <!-- '#A2719B', -->
+              <!-- 5, -->
+              <!-- '#AA5E79' -->
+            <!-- ], -->
+            <!-- 'circle-opacity': 0.8 -->
+          <!-- }, -->
+          <!-- 'filter': ['all', filterHour, filterDay] -->
+        <!-- } -->
+		<!-- );  -->
+		
+//try3 加入HDB图层无样式
+        <!-- map.addLayer( -->
+        <!-- { -->
+          <!-- id: 'faketagdelete', -->
+          <!-- type: 'fill-extrusion', -->
+          <!-- source: { -->
+            <!-- type: 'geojson', -->
+            <!-- data: './faketagdelete.geojson'  -->
+          <!-- }, -->
+          <!-- 'filter': ['all', filterHour, filterDay] -->
+        <!-- } -->
+		<!-- ); -->
+
+		
+//try2 加入HDB图层
+        map.addLayer(
+        {
+          id: 'hdbtag',
+          type: 'fill-extrusion',
+          source: {
+            type: 'geojson',
+            data: './hdbtag.geojson' 
+          },
+          paint: {
+            'fill-extrusion-height': [
+              'interpolate',
+              ['linear'],
+              ['number', ['get', 'height']],
+              6,
+			  100,
+			  65,
+              500,
+              133,
+              1000
+            ],
+            'fill-extrusion-color': [
+              'interpolate',
+              ['linear'],
+              ['number', ['get', 'Tag']],
+              1,
+              '#d2fafe',
+              2,
+              '#bcbce5',
+              3,
+              '#8a4af3',
+              4,
+              '#67d29d'
+            ],
+          },
+        }
+		);
+		
+		
+		
+		
+//try1 加入凸包点图层
+        map.addLayer(
+
+		{
+          id: 'hull',
+          type: 'circle',
+          source: {
+            type: 'geojson',
+            data: './convex_hull_v1_Point.geojson' // replace this with the url of your own geojson ** data: './collisions1601.geojson'
+          },
+          paint: {
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['number', ['get', 'carbon_eff']],
+              0,
+              4,
+              5,
+              24
+            ],
+            'circle-color': [
+              'interpolate',
+              ['linear'],
+              ['number', ['get', 'carbon_eff']],
+              0,
+              '#2DC4B2',
+              1,
+              '#3BB3C3',
+              2,
+              '#669EC4',
+              3,
+              '#8B88B6',
+              4,
+              '#A2719B',
+              5,
+              '#AA5E79'
+            ],
+            'circle-opacity': 0.3
+          },
+          
+        }
+		);
+
+        // update hour filter when the slider is dragged
+        document.getElementById('slider').addEventListener('input', (event) => {
+          const hour = parseInt(event.target.value);
+          // update the map
+          if (hour === 0) {
+              filterHour = ['!=', ['number', ['get', 'Tag']], hour];
+         } else {        
+		 filterHour = ['==', ['number', ['get', 'Tag']], hour];
+		 }
+		  
+          map.setFilter('hdbtag', ['all', filterHour, filterDay]);
+
+          // converting 0-23 hour to AMPM format
+          //const ampm = hour >= 12 ? 'PM' : 'AM';
+          //const hour12 = hour % 12 ? hour % 12 : 12;
+
+
+          <!-- if (hour==="1") -->
+          <!-- { -->
+          <!-- const hourtype="HHLD"; -->
+          <!-- } -->
+          <!-- else if (hour==="2") -->
+          <!-- { -->
+          <!-- const hourtype="LHHD"; -->
+          <!-- } -->
+          <!-- else if (hour==="3") -->
+          <!-- { -->
+          <!-- const hourtype="LHLD"; -->
+          <!-- } -->
+          <!-- else if (hour==="4") -->
+          <!-- { -->
+          <!-- const hourtype="HHLD"; -->
+          <!-- } -->
+          <!-- else -->
+          <!-- { -->
+          <!-- const hourtype="None"; -->
+          <!-- } -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          // update text in the UI
+          document.getElementById('active-hour').innerText = hourtype;
+        });
+
+        document
+          .getElementById('filters')
+          .addEventListener('change', (event) => {
+            const day = event.target.value;
+            // update the map filter
+            if (day === 'all') {
+              filterDay = ['!=', ['string', ['get', 'REGION_C']], 'placeholder'];
+            } else if (day === 'nerid') {
+              filterDay = [
+                'match',
+                ['get', 'REGION_C'],
+                ['NER'],
+                true,
+                false
+              ];
+            } else if (day === 'wrid') {
+              filterDay = [
+                'match',
+                ['get', 'REGION_C'],
+                ['WR'],
+                true,
+                false
+              ];
+            } else if (day === 'crid') {
+              filterDay = [
+                'match',
+                ['get', 'REGION_C'],
+                ['CR'],
+                true,
+                false
+              ];
+            } else if (day === 'erid') {
+              filterDay = [
+                'match',
+                ['get', 'REGION_C'],
+                ['ER'],
+                true,
+                false
+              ];
+            } else if (day === 'nrid') {
+              filterDay = [
+                'match',
+                ['get', 'REGION_C'],
+                ['NR'],
+                true,
+                false
+              ];
+            } else {
+              console.error('error');
+            }
+            map.setFilter('hdbtag', ['all', filterHour, filterDay]);
+          });
+      });
+    </script>
+  </body>
+</html>
